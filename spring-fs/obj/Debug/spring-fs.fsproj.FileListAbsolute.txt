@@ -1,0 +1,12 @@
+C:\dev\spring\spring-fs\bin\Debug\spring_fs.XML
+C:\dev\spring\spring-fs\bin\Debug\spring_fs.dll
+C:\dev\spring\spring-fs\bin\Debug\spring_fs.pdb
+C:\dev\spring\spring-fs\bin\Debug\FSharp.Core.dll
+C:\dev\spring\spring-fs\bin\Debug\Newtonsoft.Json.dll
+C:\dev\spring\spring-fs\bin\Debug\System.Net.Http.Formatting.dll
+C:\dev\spring\spring-fs\bin\Debug\System.ValueTuple.dll
+C:\dev\spring\spring-fs\bin\Debug\FSharp.Core.xml
+C:\dev\spring\spring-fs\bin\Debug\Newtonsoft.Json.xml
+C:\dev\spring\spring-fs\bin\Debug\System.Net.Http.Formatting.xml
+C:\dev\spring\spring-fs\obj\Debug\spring_fs.dll
+C:\dev\spring\spring-fs\obj\Debug\spring_fs.pdb

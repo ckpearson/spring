@@ -1,0 +1,17 @@
+C:\dev\spring\spring-scratch\bin\Debug\spring_scratch.exe.config
+C:\dev\spring\spring-scratch\bin\Debug\spring_scratch.XML
+C:\dev\spring\spring-scratch\bin\Debug\spring_scratch.exe
+C:\dev\spring\spring-scratch\bin\Debug\spring_scratch.pdb
+C:\dev\spring\spring-scratch\bin\Debug\FSharp.Core.dll
+C:\dev\spring\spring-scratch\bin\Debug\Newtonsoft.Json.dll
+C:\dev\spring\spring-scratch\bin\Debug\spring_fs.dll
+C:\dev\spring\spring-scratch\bin\Debug\System.Net.Http.Formatting.dll
+C:\dev\spring\spring-scratch\bin\Debug\System.ValueTuple.dll
+C:\dev\spring\spring-scratch\bin\Debug\spring_fs.pdb
+C:\dev\spring\spring-scratch\bin\Debug\spring_fs.xml
+C:\dev\spring\spring-scratch\bin\Debug\FSharp.Core.xml
+C:\dev\spring\spring-scratch\bin\Debug\Newtonsoft.Json.xml
+C:\dev\spring\spring-scratch\bin\Debug\System.Net.Http.Formatting.xml
+C:\dev\spring\spring-scratch\obj\Debug\spring-scratch.fsprojResolveAssemblyReference.cache
+C:\dev\spring\spring-scratch\obj\Debug\spring_scratch.exe
+C:\dev\spring\spring-scratch\obj\Debug\spring_scratch.pdb

@@ -1,0 +1,5 @@
+C:\dev\spring\spring\bin\Debug\spring.dll
+C:\dev\spring\spring\bin\Debug\spring.pdb
+C:\dev\spring\spring\obj\Debug\spring.csprojResolveAssemblyReference.cache
+C:\dev\spring\spring\obj\Debug\spring.dll
+C:\dev\spring\spring\obj\Debug\spring.pdb
