@@ -111,43 +111,102 @@
                     | Some c -> c
         })
 
-    // Monadic type used for representing the deferred command
-    type CmdDef<'t> = unit -> CommandResult<'t>
+    type CmdCtx= {
+        Client : HttpClient
+    }
 
-    let private ZeroCmdDef<'t> : unit -> Async<Choice<'t,Failure>> = (fun () -> async { return Unchecked.defaultof<'t> |> Choice1Of2 })
-    let private ValCmdDef<'t> (v:'t) : unit -> Async<Choice<'t,Failure>> = (fun () -> async { return v |> Choice1Of2 })
-    let private FailCmdDef<'t> (f:Failure) : unit -> Async<Choice<'t,Failure>> = (fun () -> async { return f |> Choice2Of2 })
+    // Monadic type used for representing the deferred command
+    type CmdDef<'a,'r> =  CmdCtx -> ('a -> CommandResult<'r>) * CmdCtx
+
+    let private ZeroCmdDef<'a,'r> : CmdDef<'a,'r> = 
+        fun ctx ->
+            ((fun _ -> async { return Unchecked.defaultof<'r> |> Choice1Of2 }), ctx)
+
+        (*(fun () -> async { return Unchecked.defaultof<'t> |> Choice1Of2 })*)
+    let private ValCmdDef<'a,'t> (v:'t) : CmdDef<'a,'t> = 
+        fun ctx ->
+            ((fun _ -> async { return v |> Choice1Of2 }), ctx)
+
+    (*(fun () -> async { return v |> Choice1Of2 })*)
+    let private FailCmdDef<'a,'r> (f:Failure) : CmdDef<'a,'r> = 
+        fun ctx ->
+            ((fun _ -> async { return f |> Choice2Of2 }), ctx)
+
+    (*(fun () -> async { return f |> Choice2Of2 })*)
+
+    let runCommand<'a,'r>
+        (client:HttpClient)
+        (cmd:CmdCtx->CommandResult<'r>) = async {
+            let! res = cmd { Client = client }
+            return match res with
+                    | Choice1Of2 v -> v
+                    | Choice2Of2 f -> 
+                        failwith <| match f with
+                                    | Exception xn -> sprintf "Command failed; exception: %s" xn.Message
+                                    | _ -> "some other failure"
+        }
     
     // Computation expression builder
-    type CommandBuilder<'a,'r>(client:HttpClient) =
-        member this.Zero() = ZeroCmdDef<'r>
-        member this.Return (x:'r) = ValCmdDef<'r> x
+    type CommandBuilder<'a, 'r>(ctx:CmdCtx) =
+        member this.Zero() = ZeroCmdDef<'a,'r>
+        member this.Return (x:'r) = ValCmdDef<'a,'r> x
 
         // Bind the processing of a net fetch op
-        member this.Bind<'t>(v:NetFetch<'t>,f) = 
-            match (v client) |> Async.RunSynchronously with
-            | Choice1Of2 v' -> f v'
-            | Choice2Of2 f' -> FailCmdDef<'r> f'
+        //member this.Bind<'t>(v:NetFetch<'t>,f) = 
+        //    match (v client) |> Async.RunSynchronously with
+        //    | Choice1Of2 v' -> f v'
+        //    | Choice2Of2 f' -> FailCmdDef<'t,'r> f'
             
         // Bind the processing of an arbitrary async op
-        member this.Bind<'t>(v:Async<'t>,f) =
-            match v |> Async.Catch |> Async.RunSynchronously with
+        //member this.Bind<'t>(v:Async<'t>,f) =
+        //    match v |> Async.Catch |> Async.RunSynchronously with
+        //    | Choice1Of2 v' -> f v'
+        //    | Choice2Of2 xn -> FailCmdDef<'t,'r> <| Exception xn
+
+        member this.Bind<'t>(v:NetFetch<'t>,f) = 
+            match (v ctx.Client) |> Async.RunSynchronously with
             | Choice1Of2 v' -> f v'
-            | Choice2Of2 xn -> FailCmdDef<'r> <| Exception xn
+            | Choice2Of2 f' -> FailCmdDef<'a,'t> f'
+
+        member this.Bind<'t>(v:CmdCtx->CommandResult<'t>, (f:'t->CmdDef<'a,'r>)) = (*f Unchecked.defaultof<'t>*)
+            let r = v ctx |> Async.RunSynchronously
+            //let r = runCommand ctx.Client v
+            match r with
+            | Choice1Of2 v' -> f v'
+            | Choice2Of2 f' -> FailCmdDef<'a,'r> f'
+            //f Unchecked.defaultof<'t>
+
+        //member this.Bind(v,f) = ZeroCmdDef<'a,'r>
             
 
-    let mkCommand<'a,'r> (f: 'a -> CmdDef<'r>) (fallback:Failure->Async<'r option>) = 
-        fun (a:'a) -> async {
-            let! r = (f a)()
-            return! match r with
-                    | Choice1Of2 r' -> async { return r'}
-                    | Choice2Of2 f' -> async {
-                        let! fallbackRes = fallback f'
-                        return match fallbackRes with
-                                | Some r' -> r'
-                                | None -> failwith "failed"
-                    }
-        }
+    let mkCommand<'a,'r> 
+        (f: CommandBuilder<'a,'r> -> 'a -> CmdDef<'a,'r>) 
+        (fallback:Failure->Async<'r option>) = 
+            fun a (ctx:CmdCtx) -> async {
+                let builder = CommandBuilder<'a,'r> ctx
+                try
+                    let deferred = f builder a ctx |> fst
+                    let! res = deferred a |> Async.Catch
+                    return! match res with
+                            | Choice2Of2 xn -> async { return Exception xn |> Choice2Of2 }
+                            | Choice1Of2 v -> async { return v }
+                with xn -> return Exception xn |> Choice2Of2
+                //return! deferred a |> Async.Catch
+            }
+            
+        //fun (a:'a) ->
+        //    ()
+        //fun (a:'a) -> async {
+        //    let! r = (f a)()
+        //    return! match r with
+        //            | Choice1Of2 r' -> async { return r'}
+        //            | Choice2Of2 f' -> async {
+        //                let! fallbackRes = fallback f'
+        //                return match fallbackRes with
+        //                        | Some r' -> r'
+        //                        | None -> failwith "failed"
+        //            }
+        //}
         
     type PostcodeResult = 
         {
@@ -155,4 +214,4 @@
         }
             
 
-    let cmd<'a,'r>  = CommandBuilder<'a,'r>(new HttpClient())
+    //let cmd<'a,'r>  = CommandBuilder<'a,'r>(new HttpClient())
