@@ -68,19 +68,19 @@ Additionally, all the commands are surfaced with the following signatures:
 2. `sendEmail` = `HttpClient -> EmailRequest -> async<unit>`
 3. `sendWelcom...` = `HttpClient unit -> -> async<unit>`
 
-> Note: signatures may differ slightly depending on current impl. progress
-
 But with the magic of partial application, you can simply redefine them all as such:
 
-``fsharp
+```fsharp
+
 let myClient = new HttpClient()
 
 let invokableGetCustomers = getCustomers myClient
 let invokableSendEmail = sendEmail myClient
 // You get the picture...
-
+```
 And now calling a command is a simple as treating it like a regular function:
 
+```fsharp
 let myCustomers = getCustomers() |> Async.runSynchronously
 ```
 
